@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="健身追蹤">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#1a1a2e">
+<link rel="apple-touch-icon" sizes="512x512" href="icon.png">
+<link rel="icon" type="image/png" href="icon.png">
 <title>增肌減脂追蹤器</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <style>
@@ -272,7 +272,7 @@
   <!-- 飲食 -->
   <div class="page" id="page-food">
     <div class="key-note">💡 需要設定 API Key 才能使用 AI 辨識功能（右上角齒輪設定）</div>
-    <input type="file" id="file-input" accept="image/*" capture="environment" onchange="handleFile(event)">
+    <input type="file" id="file-input" accept="image/*" onchange="handleFile(event)">
     <div class="upload-box" onclick="document.getElementById('file-input').click()">
       <i class="ti ti-camera-plus"></i>
       <p><strong>拍照 / 上傳食物照片</strong></p>
@@ -343,7 +343,7 @@
 
   <!-- 體態 -->
   <div class="page" id="page-photos">
-    <input type="file" id="photo-file-input" accept="image/*" capture="environment" onchange="handlePhotoUpload(event)">
+    <input type="file" id="photo-file-input" accept="image/*" onchange="handlePhotoUpload(event)">
     <div class="add-form">
       <div class="form-row"><label class="form-label">日期</label><input type="date" id="photo-date"></div>
       <div class="form-row"><label class="form-label">備註（心情、體重、感想）</label><textarea id="photo-note" rows="2" placeholder="例：第一個月結束，感覺腹部開始緊實了！" style="resize:none"></textarea></div>
