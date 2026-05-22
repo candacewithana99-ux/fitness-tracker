@@ -161,6 +161,8 @@
   .line-chart-wrap { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
   .line-chart-title { font-size: 13px; font-weight: 500; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; color: var(--color-text-primary); }
   .lc-badge { font-size: 10px; padding: 2px 8px; border-radius: 8px; font-weight: 500; }
+  .chart-tab { flex: 1; padding: 6px 4px; font-size: 12px; font-weight: 500; border-radius: 8px; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-secondary); cursor: pointer; transition: all 0.15s; }
+  .chart-tab.active { background: var(--color-text-primary); color: var(--color-background-primary); border-color: transparent; }
   .lc-down { background: #E1F5EE; color: #085041; } .lc-up { background: #FCEBEB; color: #791F1F; } .lc-flat { background: #F1EFE8; color: #444441; }
 
   .photo-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; margin-bottom: 10px; }
@@ -271,7 +273,7 @@
 
   <!-- 飲食 -->
   <div class="page" id="page-food">
-    <div class="key-note">💡 需要設定 API Key 才能使用 AI 辨識功能（右上角齒輪設定）</div>
+    <div class="key-note">💡 需要填入 Anthropic API Key 才能使用 AI 辨識功能（右上角齒輪設定）</div>
     <input type="file" id="file-input" accept="image/*" onchange="handleFile(event)">
     <div class="upload-box" onclick="document.getElementById('file-input').click()">
       <i class="ti ti-camera-plus"></i>
@@ -328,14 +330,28 @@
       </div>
       <button class="btn btn-primary" onclick="addBodyRecord()">儲存體測紀錄</button>
     </div>
-    <div class="section-label">體重趨勢</div>
+    <div class="section-label">身體趨勢</div>
     <div class="line-chart-wrap">
-      <div class="line-chart-title">
-        <span>近期體重變化</span>
-        <span class="lc-badge lc-flat" id="weight-trend-badge">尚無紀錄</span>
+      <div style="display:flex;gap:6px;margin-bottom:12px">
+        <button class="chart-tab active" id="ctab-weight" onclick="switchChart('weight')">體重</button>
+        <button class="chart-tab" id="ctab-fat" onclick="switchChart('fat')">體脂率</button>
+        <button class="chart-tab" id="ctab-muscle" onclick="switchChart('muscle')">肌肉量</button>
       </div>
-      <canvas id="weight-line-chart" height="130" style="width:100%;display:block"></canvas>
-      <div style="display:flex;justify-content:space-between;margin-top:6px" id="weight-x-labels"></div>
+      <div id="chart-weight">
+        <div class="line-chart-title"><span>體重變化</span><span class="lc-badge lc-flat" id="weight-trend-badge">尚無紀錄</span></div>
+        <canvas id="weight-line-chart" height="130" style="width:100%;display:block"></canvas>
+        <div style="display:flex;justify-content:space-between;margin-top:6px" id="weight-x-labels"></div>
+      </div>
+      <div id="chart-fat" style="display:none">
+        <div class="line-chart-title"><span>體脂率變化</span><span class="lc-badge lc-flat" id="fat-trend-badge">尚無紀錄</span></div>
+        <canvas id="fat-line-chart" height="130" style="width:100%;display:block"></canvas>
+        <div style="display:flex;justify-content:space-between;margin-top:6px" id="fat-x-labels"></div>
+      </div>
+      <div id="chart-muscle" style="display:none">
+        <div class="line-chart-title"><span>肌肉量變化</span><span class="lc-badge lc-flat" id="muscle-trend-badge">尚無紀錄</span></div>
+        <canvas id="muscle-line-chart" height="130" style="width:100%;display:block"></canvas>
+        <div style="display:flex;justify-content:space-between;margin-top:6px" id="muscle-x-labels"></div>
+      </div>
     </div>
     <div class="section-label">歷史紀錄</div>
     <div id="body-records"></div>
@@ -598,25 +614,38 @@ function handleFile(e) {
 
 async function analyzeFood(base64, mime) {
   const apikey = state.goals.apikey;
-  if (!apikey) { document.getElementById('analyzing').style.display='none'; showToast('請先在設定中填入 API Key'); return; }
+  if (!apikey) { document.getElementById('analyzing').style.display='none'; showToast('請先在設定中填入 Anthropic API Key'); return; }
   try {
-    const headers = {'Content-Type':'application/json'};
-    if (apikey) headers['x-api-key'] = apikey;
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers,body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mime,data:base64}},{type:'text',text:'請分析這張食物照片，估算食物名稱、分量、熱量和蛋白質。只回傳以下 JSON 格式，不要其他文字：{"name":"食物名稱","desc":"簡短描述（例如：約一人份，200g）","cal":數字,"pro":數字,"fat":數字,"emoji":"一個相關 emoji"}'}]}]})});
-    const data=await res.json();
-    const txt=data.content.map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
-    const p=JSON.parse(txt);
-    pendingFood=p;
+    const res = await fetch('https://old-dream-1bc6.candacewithana99.workers.dev/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apikey },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mime, data: base64 } },
+            { type: 'text', text: '請分析這張食物照片，估算食物名稱、分量、熱量和蛋白質。只回傳以下 JSON 格式，不要其他文字：{"name":"食物名稱","desc":"簡短描述（例如：約一人份，200g）","cal":數字,"pro":數字,"fat":數字,"emoji":"一個相關 emoji"}' }
+          ]
+        }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.type || '請求失敗');
+    const txt = data.content.map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
+    const p = JSON.parse(txt);
+    pendingFood = p;
     document.getElementById('analyzing').style.display='none';
-    document.getElementById('result-name').textContent=p.name||'未知食物';
-    document.getElementById('result-desc').textContent=p.desc||'';
-    document.getElementById('result-cal').textContent=p.cal||'—';
-    document.getElementById('result-pro').textContent=p.pro||'—';
-    document.getElementById('result-fat').textContent=p.fat||'—';
+    document.getElementById('result-name').textContent = p.name || '未知食物';
+    document.getElementById('result-desc').textContent = p.desc || '';
+    document.getElementById('result-cal').textContent = p.cal || '—';
+    document.getElementById('result-pro').textContent = p.pro || '—';
+    document.getElementById('result-fat').textContent = p.fat || '—';
     document.getElementById('ai-result').style.display='block';
   } catch(err) {
     document.getElementById('analyzing').style.display='none';
-    showToast('分析失敗，請重試');
+    showToast('分析失敗：' + (err.message || '請確認 API Key 是否正確'));
   }
 }
 
@@ -723,5 +752,3 @@ updateAll();
 </script>
 </body>
 </html>
-  
-    
