@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="健身追蹤">
+<meta name="theme-color" content="#1a1a2e">
+<title>增肌減脂追蹤器</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<script>
+(function(){
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 120 120"><rect width="120" height="120" rx="28" fill="#1a1a2e"/><rect x="18" y="54" width="84" height="12" rx="6" fill="#4f8ef7"/><rect x="8" y="48" width="20" height="24" rx="8" fill="#4f8ef7"/><rect x="92" y="48" width="20" height="24" rx="8" fill="#4f8ef7"/><circle cx="60" cy="38" r="13" fill="none" stroke="#1eca8a" stroke-width="4"/><path d="M53 38 Q57 31 60 38 Q63 45 67 38" fill="none" stroke="#1eca8a" stroke-width="2.5" stroke-linecap="round"/><path d="M44 82 Q52 70 60 76 Q68 82 76 70" fill="none" stroke="#f97c4f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="44" cy="82" r="3" fill="#f97c4f"/><circle cx="60" cy="76" r="3" fill="#f97c4f"/><circle cx="76" cy="70" r="3" fill="#f97c4f"/></svg>';
+  const blob = new Blob([svg], {type:'image/svg+xml'});
+  const url = URL.createObjectURL(blob);
+  const touch = document.createElement('link');
+  touch.rel = 'apple-touch-icon';
+  touch.href = url;
+  document.head.appendChild(touch);
+  const fav = document.createElement('link');
+  fav.rel = 'icon';
+  fav.type = 'image/svg+xml';
+  fav.href = url;
+  document.head.appendChild(fav);
+})();
+</script>
+<style>
+  :root {
+    --color-background-primary: #ffffff;
+    --color-background-secondary: #f5f5f3;
+    --color-background-tertiary: #eeede9;
+    --color-text-primary: #1a1a18;
+    --color-text-secondary: #6b6b67;
+    --color-border-tertiary: rgba(0,0,0,0.1);
+    --color-border-secondary: rgba(0,0,0,0.18);
+    --color-border-primary: rgba(0,0,0,0.3);
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+    --border-radius-xl: 16px;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-background-primary: #1c1c1a;
+      --color-background-secondary: #252523;
+      --color-background-tertiary: #2e2e2b;
+      --color-text-primary: #f0efeb;
+      --color-text-secondary: #8a8a84;
+      --color-border-tertiary: rgba(255,255,255,0.1);
+      --color-border-secondary: rgba(255,255,255,0.18);
+      --color-border-primary: rgba(255,255,255,0.3);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--color-background-tertiary); font-family: var(--font-sans); }
+  .app { max-width: 430px; margin: 0 auto; background: var(--color-background-tertiary); min-height: 100vh; padding-bottom: 80px; }
+
+  .header { padding: 52px 16px 0; display: flex; align-items: flex-start; justify-content: space-between; }
+  .header-left { flex: 1; min-width: 0; }
+  .header-greeting { font-size: 17px; font-weight: 500; line-height: 1.4; color: var(--color-text-primary); }
+  .header-sub { font-size: 12px; color: var(--color-text-secondary); margin-top: 3px; }
+  .settings-btn { width: 34px; height: 34px; border-radius: 50%; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--color-text-secondary); flex-shrink: 0; margin-left: 8px; }
+
+  .tab-bar { display: flex; margin: 12px 16px 0; background: var(--color-background-secondary); border-radius: 14px; padding: 3px; gap: 2px; }
+  .tab { flex: 1; padding: 7px 2px; font-size: 10px; font-weight: 500; text-align: center; color: var(--color-text-secondary); border: none; background: none; cursor: pointer; border-radius: 11px; transition: all 0.18s; }
+  .tab i { display: block; font-size: 16px; margin-bottom: 2px; }
+  .tab.active { background: var(--color-background-primary); color: var(--color-text-primary); border: 0.5px solid var(--color-border-tertiary); }
+
+  .page { display: none; padding: 12px 16px; }
+  .page.active { display: block; }
+
+  .ring-row { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; margin-bottom: 10px; }
+  .ring-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: 14px; padding: 11px; display: flex; align-items: center; gap: 9px; }
+  .ring-info { min-width: 0; }
+  .ring-label { font-size: 10px; color: var(--color-text-secondary); }
+  .ring-val { font-size: 16px; font-weight: 500; margin-top: 1px; white-space: nowrap; color: var(--color-text-primary); }
+  .ring-sub { font-size: 10px; color: var(--color-text-secondary); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .water-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
+  .water-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .water-title { font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; color: var(--color-text-primary); }
+  .water-count { font-size: 12px; color: var(--color-text-secondary); }
+  .water-cups { display: flex; gap: 5px; flex-wrap: wrap; }
+  .cup { width: 30px; height: 30px; border-radius: 8px; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-secondary); display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer; transition: all 0.15s; }
+  .cup.filled { background: #E6F1FB; border-color: #85B7EB; }
+  .cup:active { transform: scale(1.1); }
+  .water-bar { height: 4px; background: var(--color-background-secondary); border-radius: 2px; margin-top: 10px; overflow: hidden; }
+  .water-fill { height: 100%; background: #378ADD; border-radius: 2px; transition: width 0.4s; }
+
+  .section-label { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); letter-spacing: 0.07em; text-transform: uppercase; margin: 14px 0 7px; }
+
+  .food-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 9px; margin-bottom: 6px; }
+  .food-emoji { font-size: 21px; flex-shrink: 0; }
+  .food-info { flex: 1; min-width: 0; }
+  .food-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--color-text-primary); }
+  .food-tag { font-size: 10px; color: var(--color-text-secondary); margin-top: 1px; }
+  .food-right { text-align: right; flex-shrink: 0; }
+  .food-cal { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+  .food-pro { font-size: 11px; color: #0F6E56; margin-top: 1px; }
+
+  .upload-box { border: 1.5px dashed var(--color-border-secondary); border-radius: 14px; padding: 18px 14px; text-align: center; cursor: pointer; transition: background 0.15s; margin-bottom: 10px; }
+  .upload-box:active { background: var(--color-background-secondary); }
+  .upload-box i { font-size: 26px; color: var(--color-text-secondary); margin-bottom: 5px; display: block; }
+  .upload-box p { font-size: 13px; color: var(--color-text-secondary); }
+  .upload-box strong { color: var(--color-text-primary); }
+  #file-input, #photo-file-input { display: none; }
+  #preview-img { width: 100%; border-radius: 12px; margin-bottom: 10px; display: none; max-height: 200px; object-fit: cover; }
+
+  .ai-card { background: #E1F5EE; border: 0.5px solid #9FE1CB; border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; display: none; }
+  .ai-head { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+  .ai-name { font-size: 14px; font-weight: 500; color: #085041; flex: 1; }
+  .ai-badge { font-size: 10px; background: #9FE1CB; color: #085041; padding: 2px 7px; border-radius: 10px; font-weight: 500; }
+  .ai-desc { font-size: 12px; color: #0F6E56; margin-bottom: 9px; }
+  .macro-row { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 6px; }
+  .macro-box { background: #fff; border-radius: 10px; padding: 7px; text-align: center; border: 0.5px solid #9FE1CB; }
+  .macro-num { font-size: 16px; font-weight: 500; }
+  .macro-lbl { font-size: 10px; color: #0F6E56; margin-top: 1px; }
+  .mn-cal { color: #D85A30; } .mn-pro { color: #0F6E56; } .mn-fat { color: #BA7517; }
+
+  .analyzing { text-align: center; padding: 14px; display: none; }
+  .dots { display: inline-flex; gap: 4px; }
+  .dot { width: 6px; height: 6px; background: var(--color-text-secondary); border-radius: 50%; animation: blink 1.2s infinite; }
+  .dot:nth-child(2) { animation-delay: .2s; } .dot:nth-child(3) { animation-delay: .4s; }
+  @keyframes blink { 0%,80%,100%{opacity:.3} 40%{opacity:1} }
+
+  .add-form { background: var(--color-background-secondary); border-radius: 14px; padding: 12px; margin-bottom: 10px; }
+  .form-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; display: block; }
+  .form-row { margin-bottom: 8px; }
+  .form-row input, .form-row select, .form-row textarea {
+    width: 100%; padding: 9px 11px; font-size: 14px;
+    border: 0.5px solid var(--color-border-secondary); border-radius: 10px;
+    background: var(--color-background-primary); color: var(--color-text-primary);
+    -webkit-appearance: none; appearance: none;
+  }
+  .form-row input:focus, .form-row select:focus, .form-row textarea:focus { outline: none; border-color: var(--color-border-primary); }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .ex-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+  .ex-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .ex-dot.strength { background: #378ADD; } .ex-dot.cardio { background: #D85A30; } .ex-dot.flex { background: #1D9E75; }
+  .ex-info { flex: 1; }
+  .ex-name { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+  .ex-detail { font-size: 11px; color: var(--color-text-secondary); margin-top: 1px; }
+  .ex-cal { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); }
+
+  .body-rec { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; }
+  .body-date-lbl { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 8px; }
+  .body-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; }
+  .body-item-label { font-size: 11px; color: var(--color-text-secondary); }
+  .body-item-val { font-size: 16px; font-weight: 500; margin-top: 2px; color: var(--color-text-primary); }
+  .body-item-chg { font-size: 11px; margin-top: 2px; }
+  .chg-good { color: #0F6E56; } .chg-bad { color: #D85A30; }
+
+  .settings-panel { background: var(--color-background-secondary); border-radius: 14px; padding: 14px; margin-bottom: 10px; display: none; }
+  .settings-panel.open { display: block; }
+  .settings-title { font-size: 13px; font-weight: 500; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; color: var(--color-text-primary); }
+
+  .btn { width: 100%; padding: 11px; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); transition: all .15s; margin-bottom: 6px; -webkit-appearance: none; }
+  .btn:active { transform: scale(.98); background: var(--color-background-secondary); }
+  .btn-primary { background: var(--color-text-primary); color: var(--color-background-primary); border-color: transparent; }
+  .btn-primary:active { opacity: .85; }
+
+  .summary-bar { background: var(--color-background-secondary); border-radius: 10px; padding: 9px 12px; display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+  .sum-label { font-size: 12px; color: var(--color-text-secondary); }
+  .sum-val { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+
+  .week-chart { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
+  .week-bars { display: flex; align-items: flex-end; gap: 5px; height: 48px; }
+  .wbar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; justify-content: flex-end; }
+  .wbar { width: 100%; border-radius: 3px 3px 0 0; min-height: 3px; transition: height 0.35s; }
+  .wbar.cal { background: #F09595; } .wbar.pro { background: #5DCAA5; }
+  .chart-legend { display: flex; gap: 10px; margin-top: 6px; }
+  .leg { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--color-text-secondary); }
+  .leg-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+  .line-chart-wrap { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+  .line-chart-title { font-size: 13px; font-weight: 500; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; color: var(--color-text-primary); }
+  .lc-badge { font-size: 10px; padding: 2px 8px; border-radius: 8px; font-weight: 500; }
+  .lc-down { background: #E1F5EE; color: #085041; } .lc-up { background: #FCEBEB; color: #791F1F; } .lc-flat { background: #F1EFE8; color: #444441; }
+
+  .photo-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; margin-bottom: 10px; }
+  .photo-card { border-radius: 12px; overflow: hidden; border: 0.5px solid var(--color-border-tertiary); position: relative; aspect-ratio: 3/4; }
+  .photo-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .photo-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.45); padding: 7px 9px; }
+  .photo-date-txt { font-size: 11px; color: #fff; font-weight: 500; }
+  .photo-note-txt { font-size: 10px; color: rgba(255,255,255,0.8); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .photo-upload-card { border: 1.5px dashed var(--color-border-secondary); border-radius: 12px; aspect-ratio: 3/4; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; gap: 6px; }
+  .photo-upload-card:active { background: var(--color-background-secondary); }
+  .photo-upload-card i { font-size: 22px; color: var(--color-text-secondary); }
+  .photo-upload-card span { font-size: 11px; color: var(--color-text-secondary); text-align: center; padding: 0 8px; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--color-text-primary); color: var(--color-background-primary); padding: 10px 20px; border-radius: 20px; font-size: 13px; transition: transform .3s; z-index: 999; white-space: nowrap; pointer-events: none; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .key-note { font-size: 11px; color: var(--color-text-secondary); background: var(--color-background-secondary); border-radius: 10px; padding: 8px 12px; margin-bottom: 10px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-left">
+      <div class="header-greeting" id="greeting">嗨！今天也加油 💪</div>
+      <div class="header-sub" id="header-date"></div>
+    </div>
+    <button class="settings-btn" onclick="toggleSettings()" aria-label="目標設定"><i class="ti ti-adjustments-horizontal"></i></button>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" id="tab-dashboard" onclick="showPage('dashboard')"><i class="ti ti-home"></i>今天</button>
+    <button class="tab" id="tab-food" onclick="showPage('food')"><i class="ti ti-camera"></i>飲食</button>
+    <button class="tab" id="tab-exercise" onclick="showPage('exercise')"><i class="ti ti-barbell"></i>運動</button>
+    <button class="tab" id="tab-body" onclick="showPage('body')"><i class="ti ti-scale"></i>體測</button>
+    <button class="tab" id="tab-photos" onclick="showPage('photos')"><i class="ti ti-photo"></i>體態</button>
+  </div>
+
+  <!-- 今天 -->
+  <div class="page active" id="page-dashboard">
+    <div class="settings-panel" id="settings-panel">
+      <div class="settings-title"><i class="ti ti-target"></i>設定每日目標</div>
+      <div class="two-col">
+        <div class="form-row"><label class="form-label">熱量目標 (kcal)</label><input type="number" id="goal-cal" placeholder="1800"></div>
+        <div class="form-row"><label class="form-label">蛋白質目標 (g)</label><input type="number" id="goal-pro" placeholder="150"></div>
+      </div>
+      <div class="two-col">
+        <div class="form-row"><label class="form-label">飲水目標（杯）</label><input type="number" id="goal-water" placeholder="8"></div>
+        <div class="form-row"><label class="form-label">你的名字</label><input type="text" id="goal-name" placeholder="暱稱"></div>
+      </div>
+      <div class="form-row"><label class="form-label">Anthropic API Key（用於 AI 食物辨識）</label><input type="password" id="goal-apikey" placeholder="sk-ant-..."></div>
+      <button class="btn btn-primary" onclick="saveGoals()">儲存目標</button>
+    </div>
+
+    <div class="ring-row">
+      <div class="ring-card">
+        <svg width="42" height="42" viewBox="0 0 44 44" style="flex-shrink:0">
+          <circle cx="22" cy="22" r="17" fill="none" stroke="#F7C1C1" stroke-width="5"/>
+          <circle cx="22" cy="22" r="17" fill="none" stroke="#E24B4A" stroke-width="5" stroke-dasharray="107" stroke-dashoffset="107" stroke-linecap="round" transform="rotate(-90 22 22)" id="ring-cal-circle"/>
+        </svg>
+        <div class="ring-info"><div class="ring-label">今日熱量</div><div class="ring-val"><span id="d-cal">0</span><span style="font-size:10px;font-weight:400"> kcal</span></div><div class="ring-sub">目標 <span id="d-cal-goal-text">1800</span></div></div>
+      </div>
+      <div class="ring-card">
+        <svg width="42" height="42" viewBox="0 0 44 44" style="flex-shrink:0">
+          <circle cx="22" cy="22" r="17" fill="none" stroke="#9FE1CB" stroke-width="5"/>
+          <circle cx="22" cy="22" r="17" fill="none" stroke="#1D9E75" stroke-width="5" stroke-dasharray="107" stroke-dashoffset="107" stroke-linecap="round" transform="rotate(-90 22 22)" id="ring-pro-circle"/>
+        </svg>
+        <div class="ring-info"><div class="ring-label">蛋白質</div><div class="ring-val"><span id="d-pro">0</span><span style="font-size:10px;font-weight:400"> g</span></div><div class="ring-sub">目標 <span id="d-pro-goal-text">150</span>g</div></div>
+      </div>
+      <div class="ring-card">
+        <svg width="42" height="42" viewBox="0 0 44 44" style="flex-shrink:0">
+          <circle cx="22" cy="22" r="17" fill="none" stroke="#D3D1C7" stroke-width="5"/>
+          <circle cx="22" cy="22" r="17" fill="none" stroke="#5F5E5A" stroke-width="5" stroke-dasharray="107" stroke-dashoffset="107" stroke-linecap="round" transform="rotate(-90 22 22)" id="ring-ex-circle"/>
+        </svg>
+        <div class="ring-info"><div class="ring-label">運動消耗</div><div class="ring-val"><span id="d-ex">0</span><span style="font-size:10px;font-weight:400"> kcal</span></div><div class="ring-sub">淨攝入 <span id="d-net">0</span></div></div>
+      </div>
+      <div class="ring-card">
+        <svg width="42" height="42" viewBox="0 0 44 44" style="flex-shrink:0">
+          <circle cx="22" cy="22" r="17" fill="none" stroke="#B5D4F4" stroke-width="5"/>
+          <circle cx="22" cy="22" r="17" fill="none" stroke="#378ADD" stroke-width="5" stroke-dasharray="107" stroke-dashoffset="107" stroke-linecap="round" transform="rotate(-90 22 22)" id="ring-water-circle"/>
+        </svg>
+        <div class="ring-info"><div class="ring-label">飲水</div><div class="ring-val"><span id="d-water">0</span><span style="font-size:10px;font-weight:400"> / <span id="d-water-goal">8</span>杯</span></div><div class="ring-sub"><span id="d-water-ml">0</span> ml</div></div>
+      </div>
+    </div>
+
+    <div class="water-card">
+      <div class="water-top">
+        <div class="water-title"><i class="ti ti-droplet" style="font-size:15px;color:#378ADD"></i>今日飲水</div>
+        <div class="water-count"><span id="water-cups-count">0</span> / <span id="water-cups-goal-display">8</span> 杯</div>
+      </div>
+      <div class="water-cups" id="water-cups-row"></div>
+      <div class="water-bar"><div class="water-fill" id="water-bar-fill" style="width:0%"></div></div>
+    </div>
+
+    <div class="section-label">本週攝入</div>
+    <div class="week-chart">
+      <div class="week-bars" id="week-bars"></div>
+      <div id="week-days" style="display:flex;gap:5px;margin-top:3px"></div>
+      <div class="chart-legend">
+        <div class="leg"><div class="leg-dot" style="background:#F09595"></div>熱量</div>
+        <div class="leg"><div class="leg-dot" style="background:#5DCAA5"></div>蛋白質</div>
+      </div>
+    </div>
+
+    <div class="section-label">今日飲食</div>
+    <div id="dash-food-log"></div>
+    <button class="btn" style="margin-top:4px" onclick="showPage('food')"><i class="ti ti-plus"></i> 拍照記錄飲食</button>
+  </div>
+
+  <!-- 飲食 -->
+  <div class="page" id="page-food">
+    <div class="key-note">💡 需要設定 API Key 才能使用 AI 辨識功能（右上角齒輪設定）</div>
+    <input type="file" id="file-input" accept="image/*" onchange="handleFile(event)">
+    <div class="upload-box" onclick="document.getElementById('file-input').click()">
+      <i class="ti ti-camera-plus"></i>
+      <p><strong>拍照 / 上傳食物照片</strong></p>
+      <p style="margin-top:3px">AI 自動辨識熱量與蛋白質</p>
+    </div>
+    <img id="preview-img" alt="上傳的食物照片"/>
+    <div class="analyzing" id="analyzing"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><p style="font-size:12px;color:var(--color-text-secondary);margin-top:8px">AI 正在分析食物成分…</p></div>
+    <div class="ai-card" id="ai-result">
+      <div class="ai-head"><span class="ai-name" id="result-name">—</span><span class="ai-badge">AI 分析</span></div>
+      <div class="ai-desc" id="result-desc">—</div>
+      <div class="macro-row">
+        <div class="macro-box"><div class="macro-num mn-cal" id="result-cal">—</div><div class="macro-lbl">熱量 kcal</div></div>
+        <div class="macro-box"><div class="macro-num mn-pro" id="result-pro">—</div><div class="macro-lbl">蛋白質 g</div></div>
+        <div class="macro-box"><div class="macro-num mn-fat" id="result-fat">—</div><div class="macro-lbl">脂肪 g</div></div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:10px" onclick="addFoodToLog()">加入今日紀錄</button>
+    </div>
+    <div class="section-label">今日紀錄</div>
+    <div id="food-log-list"></div>
+    <div class="summary-bar"><span class="sum-label">今日合計</span><span class="sum-val"><span id="total-cal-text">0</span> kcal · 蛋白質 <span id="total-pro-text">0</span>g</span></div>
+  </div>
+
+  <!-- 運動 -->
+  <div class="page" id="page-exercise">
+    <div class="add-form">
+      <div class="form-row"><label class="form-label">運動名稱</label><input type="text" id="ex-name" placeholder="例：深蹲、慢跑、瑜伽"></div>
+      <div class="two-col">
+        <div class="form-row"><label class="form-label">類型</label><select id="ex-type"><option value="strength">重訓</option><option value="cardio">有氧</option><option value="flex">伸展</option></select></div>
+        <div class="form-row"><label class="form-label">時長（分鐘）</label><input type="number" id="ex-min" placeholder="45" inputmode="numeric"></div>
+      </div>
+      <div class="two-col">
+        <div class="form-row"><label class="form-label">組數 / 說明</label><input type="text" id="ex-sets" placeholder="4 × 10"></div>
+        <div class="form-row"><label class="form-label">消耗熱量 kcal</label><input type="number" id="ex-cal-input" placeholder="250" inputmode="numeric"></div>
+      </div>
+      <button class="btn btn-primary" onclick="addExercise()">加入運動紀錄</button>
+    </div>
+    <div class="section-label">今日運動</div>
+    <div id="exercise-list"></div>
+    <div class="summary-bar"><span class="sum-label">今日消耗</span><span class="sum-val"><span id="total-ex-cal">0</span> kcal</span></div>
+  </div>
+
+  <!-- 體測 -->
+  <div class="page" id="page-body">
+    <div class="add-form">
+      <div class="form-row"><label class="form-label">量測日期</label><input type="date" id="body-date"></div>
+      <div class="two-col">
+        <div class="form-row"><label class="form-label">體重 (kg)</label><input type="number" id="body-weight" placeholder="72.3" step="0.1" inputmode="decimal"></div>
+        <div class="form-row"><label class="form-label">體脂率 (%)</label><input type="number" id="body-fat" placeholder="18.5" step="0.1" inputmode="decimal"></div>
+      </div>
+      <div class="two-col">
+        <div class="form-row"><label class="form-label">肌肉量 (kg)</label><input type="number" id="body-muscle" placeholder="55.2" step="0.1" inputmode="decimal"></div>
+        <div class="form-row"><label class="form-label">BMI</label><input type="number" id="body-bmi" placeholder="22.4" step="0.1" inputmode="decimal"></div>
+      </div>
+      <button class="btn btn-primary" onclick="addBodyRecord()">儲存體測紀錄</button>
+    </div>
+    <div class="section-label">體重趨勢</div>
+    <div class="line-chart-wrap">
+      <div class="line-chart-title">
+        <span>近期體重變化</span>
+        <span class="lc-badge lc-flat" id="weight-trend-badge">尚無紀錄</span>
+      </div>
+      <canvas id="weight-line-chart" height="130" style="width:100%;display:block"></canvas>
+      <div style="display:flex;justify-content:space-between;margin-top:6px" id="weight-x-labels"></div>
+    </div>
+    <div class="section-label">歷史紀錄</div>
+    <div id="body-records"></div>
+  </div>
+
+  <!-- 體態 -->
+  <div class="page" id="page-photos">
+    <input type="file" id="photo-file-input" accept="image/*" onchange="handlePhotoUpload(event)">
+    <div class="add-form">
+      <div class="form-row"><label class="form-label">日期</label><input type="date" id="photo-date"></div>
+      <div class="form-row"><label class="form-label">備註（心情、體重、感想）</label><textarea id="photo-note" rows="2" placeholder="例：第一個月結束，感覺腹部開始緊實了！" style="resize:none"></textarea></div>
+      <div style="display:flex;gap:6px">
+        <button class="btn" style="flex:1;margin:0" onclick="document.getElementById('photo-file-input').click()"><i class="ti ti-upload"></i> 選擇照片</button>
+        <button class="btn btn-primary" style="flex:1;margin:0" onclick="saveBodyPhoto()">儲存</button>
+      </div>
+      <div id="photo-preview-wrap" style="margin-top:10px;display:none">
+        <img id="photo-preview" style="width:100%;border-radius:10px;max-height:160px;object-fit:cover" alt="體態照片預覽"/>
+      </div>
+    </div>
+    <div class="section-label">體態相簿</div>
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:10px">記錄每個階段的身體變化，見證自己的努力成果</div>
+    <div class="photo-grid" id="photo-grid"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CIRC = 2 * Math.PI * 17;
+const STORAGE_KEY = 'fitnessApp_v1';
+
+const GREETINGS = [
+  n=>`${n}，每一滴汗水都算數 💧`,
+  n=>`${n}，昨天的你努力了，今天繼續！`,
+  n=>`${n}，進步不是直線，但你在對的路上 🌱`,
+  n=>`${n}，身體正在悄悄改變，別停下來！`,
+  n=>`${n}，今天的堅持是明天的成果 🔥`,
+  n=>`${n}，比昨天好一點點就夠了 ✨`,
+  n=>`${n}，強大的身體從今天的選擇開始`,
+  n=>`${n}，累了就休息，但別放棄！`,
+  n=>`${n}，你的努力肌肉都看在眼裡 💪`,
+  n=>`${n}，喝水、吃蛋白、動起來！加油！`,
+  n=>`${n}，每次訓練都是對自己的投資 📈`,
+  n=>`${n}，堅持的樣子最美！繼續吧！`,
+];
+
+let state = {
+  goals: {cal:1800, pro:150, water:8, name:'', apikey:''},
+  waterCups: 0,
+  foodLog: [],
+  exerciseLog: [],
+  bodyRecords: [],
+  bodyPhotos: [],
+  weekData: [{day:'一',cal:0,pro:0},{day:'二',cal:0,pro:0},{day:'三',cal:0,pro:0},{day:'四',cal:0,pro:0},{day:'五',cal:0,pro:0},{day:'六',cal:0,pro:0},{day:'日',cal:0,pro:0}],
+};
+let pendingFood = null;
+let pendingPhotoData = null;
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+function loadState() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (s) state = Object.assign(state, JSON.parse(s));
+  } catch(e) {}
+}
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+  if (id === 'body') setTimeout(drawWeightChart, 60);
+}
+
+function toggleSettings() {
+  const p = document.getElementById('settings-panel');
+  p.classList.toggle('open');
+  if (p.classList.contains('open')) {
+    document.getElementById('goal-cal').value = state.goals.cal;
+    document.getElementById('goal-pro').value = state.goals.pro;
+    document.getElementById('goal-water').value = state.goals.water;
+    document.getElementById('goal-name').value = state.goals.name;
+    document.getElementById('goal-apikey').value = state.goals.apikey || '';
+  }
+}
+
+function saveGoals() {
+  state.goals.cal = parseInt(document.getElementById('goal-cal').value) || 1800;
+  state.goals.pro = parseInt(document.getElementById('goal-pro').value) || 150;
+  state.goals.water = parseInt(document.getElementById('goal-water').value) || 8;
+  state.goals.name = document.getElementById('goal-name').value.trim();
+  state.goals.apikey = document.getElementById('goal-apikey').value.trim();
+  document.getElementById('settings-panel').classList.remove('open');
+  saveState();
+  updateGreeting();
+  updateAll();
+  showToast('目標已更新！');
+}
+
+function updateGreeting() {
+  const n = state.goals.name || '你';
+  const idx = new Date().getDate() % GREETINGS.length;
+  document.getElementById('greeting').textContent = GREETINGS[idx](n);
+}
+
+function setRing(id, pct) {
+  const el = document.getElementById(id);
+  if (el) el.style.strokeDashoffset = (CIRC*(1-Math.min(1,pct))).toFixed(1);
+}
+
+function renderWaterCups() {
+  const g = state.goals.water;
+  const c = state.waterCups;
+  let html = '';
+  for (let i=1; i<=g; i++) {
+    html += `<div class="cup${i<=c?' filled':''}" onclick="toggleCup(${i})"><i class="ti ti-glass-full" style="font-size:13px;color:${i<=c?'#185FA5':'var(--color-text-secondary)'}"></i></div>`;
+  }
+  document.getElementById('water-cups-row').innerHTML = html;
+  document.getElementById('water-cups-count').textContent = c;
+  document.getElementById('water-cups-goal-display').textContent = g;
+  document.getElementById('water-bar-fill').style.width = Math.min(100,Math.round(c/g*100))+'%';
+  document.getElementById('d-water').textContent = c;
+  document.getElementById('d-water-goal').textContent = g;
+  document.getElementById('d-water-ml').textContent = c*250;
+  setRing('ring-water-circle', c/g);
+}
+
+function toggleCup(n) {
+  state.waterCups = state.waterCups===n ? n-1 : n;
+  saveState();
+  renderWaterCups();
+  if (state.waterCups >= state.goals.water) showToast('喝水目標達成！');
+}
+
+function updateTotals() {
+  const tc = state.foodLog.reduce((s,f)=>s+f.cal,0);
+  const tp = state.foodLog.reduce((s,f)=>s+f.pro,0);
+  const te = state.exerciseLog.reduce((s,e)=>s+e.cal,0);
+  document.getElementById('d-cal').textContent = tc;
+  document.getElementById('d-pro').textContent = tp;
+  document.getElementById('d-ex').textContent = te;
+  document.getElementById('d-net').textContent = tc-te;
+  document.getElementById('d-cal-goal-text').textContent = state.goals.cal;
+  document.getElementById('d-pro-goal-text').textContent = state.goals.pro;
+  document.getElementById('total-cal-text').textContent = tc;
+  document.getElementById('total-pro-text').textContent = tp;
+  document.getElementById('total-ex-cal').textContent = te;
+  setRing('ring-cal-circle', tc/state.goals.cal);
+  setRing('ring-pro-circle', tp/state.goals.pro);
+  setRing('ring-ex-circle', te/500);
+}
+
+function renderFoodList(containerId, list) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (list.length === 0) { el.innerHTML = '<div style="text-align:center;color:var(--color-text-secondary);font-size:12px;padding:12px 0">尚無紀錄，拍張食物照片開始吧！</div>'; return; }
+  el.innerHTML = list.map(f=>`<div class="food-card"><div class="food-emoji">${f.emoji}</div><div class="food-info"><div class="food-name">${f.name}</div><div class="food-tag">${f.portion}</div></div><div class="food-right"><div class="food-cal">${f.cal} kcal</div><div class="food-pro">蛋白質 ${f.pro}g</div></div></div>`).join('');
+}
+
+function renderExercises() {
+  const labels = {strength:'重訓',cardio:'有氧',flex:'伸展'};
+  const el = document.getElementById('exercise-list');
+  if (state.exerciseLog.length === 0) { el.innerHTML = '<div style="text-align:center;color:var(--color-text-secondary);font-size:12px;padding:12px 0">尚無運動紀錄</div>'; }
+  else el.innerHTML = state.exerciseLog.map(e=>`<div class="ex-card"><div class="ex-dot ${e.type}"></div><div class="ex-info"><div class="ex-name">${e.name}</div><div class="ex-detail">${labels[e.type]} · ${e.min}分鐘 · ${e.sets}</div></div><div class="ex-cal">${e.cal} kcal</div></div>`).join('');
+  updateTotals();
+}
+
+function renderBodyRecords() {
+  const el = document.getElementById('body-records');
+  if (state.bodyRecords.length===0) { el.innerHTML = '<div style="text-align:center;color:var(--color-text-secondary);font-size:12px;padding:12px 0">尚無體測紀錄，每月5日量一次吧！</div>'; return; }
+  el.innerHTML = state.bodyRecords.map((r,i)=>{
+    const prev = state.bodyRecords[i+1];
+    const d=(key,good)=>{
+      if(!prev) return '';
+      const v=(r[key]-prev[key]).toFixed(1);
+      const cls=parseFloat(v)===0?'':(good===parseFloat(v)<0?'chg-good':'chg-bad');
+      return `<div class="body-item-chg ${cls}">${parseFloat(v)>0?'+':''}${v}</div>`;
+    };
+    return `<div class="body-rec"><div class="body-date-lbl">${r.date}</div><div class="body-grid"><div><div class="body-item-label">體重</div><div class="body-item-val">${r.weight}<span style="font-size:10px;font-weight:400"> kg</span></div>${d('weight',true)}</div><div><div class="body-item-label">體脂率</div><div class="body-item-val">${r.fat}<span style="font-size:10px;font-weight:400"> %</span></div>${d('fat',true)}</div><div><div class="body-item-label">肌肉量</div><div class="body-item-val">${r.muscle}<span style="font-size:10px;font-weight:400"> kg</span></div>${d('muscle',false)}</div><div><div class="body-item-label">BMI</div><div class="body-item-val">${r.bmi}</div>${d('bmi',true)}</div></div></div>`;
+  }).join('');
+}
+
+function drawWeightChart() {
+  const canvas = document.getElementById('weight-line-chart');
+  if (!canvas || state.bodyRecords.length < 1) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.parentElement.clientWidth - 28;
+  const H = 130;
+  canvas.width = W*2; canvas.height = H*2; canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  ctx.scale(2,2);
+  const data = [...state.bodyRecords].reverse();
+  const weights = data.map(r=>r.weight);
+  const minW = Math.min(...weights)-1, maxW = Math.max(...weights)+1;
+  const pad = {t:16,b:6,l:38,r:10};
+  const cw=W-pad.l-pad.r, ch=H-pad.t-pad.b;
+  const isDark = window.matchMedia('(prefers-color-scheme:dark)').matches;
+  const gridC = isDark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.06)';
+  const textC = isDark?'rgba(255,255,255,0.4)':'rgba(0,0,0,0.38)';
+  const dotFill = isDark?'#1c1c1a':'#ffffff';
+  ctx.clearRect(0,0,W,H);
+  for(let i=0;i<=4;i++){
+    const y=pad.t+(ch/4)*i;
+    const val=(maxW-(maxW-minW)/4*i).toFixed(1);
+    ctx.strokeStyle=gridC; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+    ctx.fillStyle=textC; ctx.font='9px sans-serif'; ctx.textAlign='right';
+    ctx.fillText(val, pad.l-4, y+3);
+  }
+  const pts = data.map((r,i)=>({
+    x: pad.l+(data.length>1?(cw/(data.length-1))*i:cw/2),
+    y: pad.t+ch-((r.weight-minW)/(maxW-minW))*ch
+  }));
+  ctx.beginPath();
+  pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+  ctx.lineTo(pts[pts.length-1].x,pad.t+ch); ctx.lineTo(pts[0].x,pad.t+ch); ctx.closePath();
+  ctx.fillStyle=isDark?'rgba(55,138,221,0.1)':'rgba(55,138,221,0.07)'; ctx.fill();
+  ctx.beginPath();
+  pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+  ctx.strokeStyle='#378ADD'; ctx.lineWidth=2; ctx.lineJoin='round'; ctx.stroke();
+  pts.forEach((p,i)=>{
+    ctx.beginPath(); ctx.arc(p.x,p.y,4,0,Math.PI*2);
+    ctx.fillStyle=dotFill; ctx.fill();
+    ctx.strokeStyle='#185FA5'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle=textC; ctx.font='9px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(data[i].weight.toFixed(1),p.x,p.y-7);
+  });
+  document.getElementById('weight-x-labels').innerHTML=data.map(r=>{
+    const p=r.date.split('-'); return `<span style="font-size:10px;color:var(--color-text-secondary);flex:1;text-align:center">${p[1]}/${p[2]}</span>`;
+  }).join('');
+  const last=state.bodyRecords[0].weight, first=state.bodyRecords[state.bodyRecords.length-1].weight;
+  const diff=(last-first).toFixed(1);
+  const badge=document.getElementById('weight-trend-badge');
+  if(parseFloat(diff)<0){badge.className='lc-badge lc-down';badge.textContent=`↓ ${Math.abs(diff)} kg`;}
+  else if(parseFloat(diff)>0){badge.className='lc-badge lc-up';badge.textContent=`↑ +${diff} kg`;}
+  else{badge.className='lc-badge lc-flat';badge.textContent='維持穩定';}
+}
+
+function renderWeekChart() {
+  const maxCal=Math.max(...state.weekData.map(d=>d.cal),1);
+  const maxPro=Math.max(...state.weekData.map(d=>d.pro),1);
+  const todayIdx=[6,0,1,2,3,4,5][new Date().getDay()];
+  document.getElementById('week-bars').innerHTML=state.weekData.map((d,i)=>`<div class="wbar-wrap"><div class="wbar pro" style="height:${Math.round(d.pro/maxPro*42)}px;opacity:${i===todayIdx?1:0.5}"></div><div class="wbar cal" style="height:${Math.round(d.cal/maxCal*42)}px;opacity:${i===todayIdx?1:0.5}"></div></div>`).join('');
+  document.getElementById('week-days').innerHTML=state.weekData.map((d,i)=>`<div style="flex:1;text-align:center;font-size:10px;color:${i===todayIdx?'var(--color-text-primary)':'var(--color-text-secondary)'};font-weight:${i===todayIdx?500:400}">${d.day}</div>`).join('');
+}
+
+function handleFile(e) {
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=document.getElementById('preview-img');
+    img.src=ev.target.result; img.style.display='block';
+    document.getElementById('ai-result').style.display='none';
+    document.getElementById('analyzing').style.display='block';
+    analyzeFood(ev.target.result.split(',')[1],file.type);
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analyzeFood(base64, mime) {
+  const apikey = state.goals.apikey;
+  if (!apikey) { document.getElementById('analyzing').style.display='none'; showToast('請先在設定中填入 API Key'); return; }
+  try {
+    const headers = {'Content-Type':'application/json'};
+    if (apikey) headers['x-api-key'] = apikey;
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers,body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mime,data:base64}},{type:'text',text:'請分析這張食物照片，估算食物名稱、分量、熱量和蛋白質。只回傳以下 JSON 格式，不要其他文字：{"name":"食物名稱","desc":"簡短描述（例如：約一人份，200g）","cal":數字,"pro":數字,"fat":數字,"emoji":"一個相關 emoji"}'}]}]})});
+    const data=await res.json();
+    const txt=data.content.map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
+    const p=JSON.parse(txt);
+    pendingFood=p;
+    document.getElementById('analyzing').style.display='none';
+    document.getElementById('result-name').textContent=p.name||'未知食物';
+    document.getElementById('result-desc').textContent=p.desc||'';
+    document.getElementById('result-cal').textContent=p.cal||'—';
+    document.getElementById('result-pro').textContent=p.pro||'—';
+    document.getElementById('result-fat').textContent=p.fat||'—';
+    document.getElementById('ai-result').style.display='block';
+  } catch(err) {
+    document.getElementById('analyzing').style.display='none';
+    showToast('分析失敗，請重試');
+  }
+}
+
+function addFoodToLog() {
+  if (!pendingFood) return;
+  const h=new Date().getHours();
+  const portion=h<10?'早餐':h<14?'午餐':h<17?'下午點心':'晚餐';
+  state.foodLog.push({emoji:pendingFood.emoji||'🍽️',name:pendingFood.name,portion,cal:pendingFood.cal,pro:pendingFood.pro,fat:pendingFood.fat});
+  const todayIdx=[6,0,1,2,3,4,5][new Date().getDay()];
+  state.weekData[todayIdx].cal=state.foodLog.reduce((s,f)=>s+f.cal,0);
+  state.weekData[todayIdx].pro=state.foodLog.reduce((s,f)=>s+f.pro,0);
+  pendingFood=null;
+  document.getElementById('ai-result').style.display='none';
+  document.getElementById('preview-img').style.display='none';
+  document.getElementById('preview-img').src='';
+  document.getElementById('file-input').value='';
+  saveState();
+  renderFoodList('food-log-list',state.foodLog);
+  renderFoodList('dash-food-log',state.foodLog.slice(-3));
+  updateTotals(); renderWeekChart();
+  showToast('✓ 已加入今日飲食紀錄！');
+}
+
+function addExercise() {
+  const name=document.getElementById('ex-name').value.trim();
+  const type=document.getElementById('ex-type').value;
+  const min=parseInt(document.getElementById('ex-min').value)||0;
+  const sets=document.getElementById('ex-sets').value;
+  const cal=parseInt(document.getElementById('ex-cal-input').value)||0;
+  if (!name) { showToast('請填寫運動名稱'); return; }
+  state.exerciseLog.unshift({name,type,min,sets:sets||(min+'分鐘'),cal});
+  ['ex-name','ex-min','ex-sets','ex-cal-input'].forEach(id=>document.getElementById(id).value='');
+  saveState(); renderExercises();
+  showToast('✓ 運動紀錄已新增！');
+}
+
+function addBodyRecord() {
+  const date=document.getElementById('body-date').value;
+  const weight=parseFloat(document.getElementById('body-weight').value);
+  if (!date||!weight) { showToast('請填寫日期和體重'); return; }
+  state.bodyRecords.unshift({date,weight,fat:parseFloat(document.getElementById('body-fat').value)||0,muscle:parseFloat(document.getElementById('body-muscle').value)||0,bmi:parseFloat(document.getElementById('body-bmi').value)||0});
+  ['body-weight','body-fat','body-muscle','body-bmi'].forEach(id=>document.getElementById(id).value='');
+  saveState(); renderBodyRecords(); drawWeightChart();
+  showToast('✓ 體測紀錄已儲存！');
+}
+
+function handlePhotoUpload(e) {
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    pendingPhotoData=ev.target.result;
+    document.getElementById('photo-preview').src=ev.target.result;
+    document.getElementById('photo-preview-wrap').style.display='block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveBodyPhoto() {
+  const date=document.getElementById('photo-date').value;
+  const note=document.getElementById('photo-note').value.trim();
+  if (!pendingPhotoData) { showToast('請先選擇照片'); return; }
+  if (!date) { showToast('請填寫日期'); return; }
+  state.bodyPhotos.unshift({date,note,src:pendingPhotoData});
+  pendingPhotoData=null;
+  document.getElementById('photo-preview-wrap').style.display='none';
+  document.getElementById('photo-preview').src='';
+  document.getElementById('photo-file-input').value='';
+  document.getElementById('photo-note').value='';
+  saveState(); renderPhotoGrid();
+  showToast('✓ 體態照片已儲存！');
+}
+
+function renderPhotoGrid() {
+  const grid=document.getElementById('photo-grid');
+  let html=state.bodyPhotos.map(p=>`<div class="photo-card"><img src="${p.src}" alt="體態照片 ${p.date}"/><div class="photo-overlay"><div class="photo-date-txt">${p.date}</div>${p.note?`<div class="photo-note-txt">${p.note}</div>`:''}</div></div>`).join('');
+  html+=`<div class="photo-upload-card" onclick="document.getElementById('photo-file-input').click()"><i class="ti ti-plus"></i><span>新增體態照片</span></div>`;
+  grid.innerHTML=html;
+}
+
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+function updateAll() {
+  updateTotals(); renderWaterCups();
+}
+
+// Init
+loadState();
+const now=new Date();
+document.getElementById('header-date').textContent=now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日';
+document.getElementById('body-date').value=now.toISOString().split('T')[0];
+document.getElementById('photo-date').value=now.toISOString().split('T')[0];
+updateGreeting();
+renderFoodList('food-log-list',state.foodLog);
+renderFoodList('dash-food-log',state.foodLog.slice(-3));
+renderExercises();
+renderBodyRecords();
+renderWeekChart();
+renderPhotoGrid();
+updateAll();
+</script>
+</body>
+</html>
